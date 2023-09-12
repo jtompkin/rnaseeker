@@ -44,8 +44,12 @@ def write_terms(
         pval_column: int = 4
 ) -> None:
     """Write gene ontology terms. Optionally format output for Revigo"""
+    if format_out:
+        quoting = csv.QUOTE_MINIMAL
+    else:
+        quoting =csv.QUOTE_ALL
     with out_file:
-        out_writer = csv.writer(out_file, delimiter=delimiter, quoting=csv.QUOTE_ALL)
+        out_writer = csv.writer(out_file, delimiter=delimiter, quoting=quoting)
         if format_out:
             out_writer.writerows(
                 [[row[id_column], row[pval_column]] for row in terms[1:]]
@@ -57,13 +61,15 @@ def write_terms(
         return None
 
 
-def main(args: argparse.Namespace | None = None):
+def main(args: list[str] | None = None):
+    """Parse arguments and call functions."""
     parser = argparse.ArgumentParser(prog='gofilter',
                                      description='Filter gProfiler output and format for revigo')
 
     parser.add_argument('gProfiler_file', type=argparse.FileType('r', encoding='UTF-8'),
                         help="Path to gProfiler file to filter. Reads from standard in if `-'.")
-    parser.add_argument('-v', '--version', action='version', version=f'{parser.prog} {_VERSION}')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'rnaseq: {parser.prog} {_VERSION}')
 
     input_options = parser.add_argument_group('input options')
     input_options.add_argument('-c', '--term-column', dest='term_column', type=int, default=1,
@@ -101,7 +107,7 @@ def main(args: argparse.Namespace | None = None):
                                 help='Path to file containing gene ontology terms to filter. '+
                                 "One gene ontology term per line. Not compatible with -f.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     filtered_terms = filter_terms(args.gProfiler_file,
                                   delimiter=args.in_delimiter,
