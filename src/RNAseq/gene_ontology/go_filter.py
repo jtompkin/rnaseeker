@@ -7,6 +7,7 @@
 import sys
 import csv
 import argparse
+from typing import TextIO
 
 try:
     from ..version import __version__
@@ -16,7 +17,7 @@ except ImportError:
 
 
 def filter_terms(
-        in_path: str,
+        in_file: TextIO,
         delimiter: str = ',',
         term_column: int = 1,
         header: bool = True,
@@ -24,10 +25,6 @@ def filter_terms(
         filter_path: str | None = None,
 ) -> list[str]:
     """Filter gene ontology terms from input file"""
-    if in_path == '-':
-        in_file = sys.stdin
-    else:
-        in_file = open(in_path, 'r', encoding='UTF-8')
     if filter_path:
         with open(filter_path, 'r', encoding='UTF-8') as filter_file:
             to_filter = filter_file.readlines()
@@ -41,7 +38,7 @@ def filter_terms(
 
 
 def write_terms(
-        out_path: str,
+        out_file: TextIO,
         terms: list[str],
         delimiter: str = '\t',
         format_out: bool = True,
@@ -49,10 +46,6 @@ def write_terms(
         pval_column: int = 4
 ) -> None:
     """Write gene ontology terms. Optionally format output for Revigo"""
-    if out_path == '-':
-        out_file = sys.stdout
-    else:
-        out_file = open(out_path, 'w', encoding='UTF-8')
     with out_file:
         out_writer = csv.writer(out_file, delimiter=delimiter)
         if format_out:
@@ -67,7 +60,7 @@ def main():
     parser = argparse.ArgumentParser(prog='gofilter',
                                      description='Filter gProfiler output and format for revigo')
 
-    parser.add_argument('gProfiler_file',
+    parser.add_argument('gProfiler_file', type=argparse.FileType('r', encoding='UTF-8'),
                         help="Path to gProfiler file to filter. Reads from standard in if `-'.")
     parser.add_argument('-v', '--version', action='version', version=f'{parser.prog} {_VERSION}')
 
@@ -79,9 +72,10 @@ def main():
                                help="Delimiter character for input. Defaults to `,'.")
 
     output_options = parser.add_argument_group('output options')
-    output_options.add_argument('-o', '--out', dest='out_path', default='-',
+    output_options.add_argument('-o', '--out', dest='out_file', nargs='?',
+                                type=argparse.FileType, default=sys.stdout,
                                 help="Path to output file. Writes to standard out if `-'. "+
-                                "Defaults to `-'.")
+                                "Defaults to standard out.")
     output_options.add_argument('-p', '--pval-column', dest='pval_column', type=int, default=4,
                                 help='Integer index of column containing result P-value. '+
                                 'Index starts at 0. Defaults to 4. Only used if formatting output.')
