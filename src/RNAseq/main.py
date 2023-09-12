@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import argparse
 
-import gene_ontology.go_filter
+from gene_ontology import go_filter
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
     subparsers = parser.add_subparsers(required=True)
 
     parser_gofilter = subparsers.add_parser('gofilter')
-    parser_gofilter.set_defaults(func=gene_ontology.go_filter.main)
+    parser_gofilter.set_defaults(func=go_filter.main)
 
     args = parser.parse_args()
     args.func(args)
