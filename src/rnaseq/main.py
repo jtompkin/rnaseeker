@@ -14,6 +14,7 @@ Available sub-programs
 import sys
 
 from .gene_ontology import go_filter
+from .fasta import fasta_split
 from .version import __version__
 
 
@@ -24,6 +25,7 @@ def main():
     """Deploy given sub-program."""
     program_to_function = {
         'go_filter': go_filter.main,
+        'fasta_split': fasta_split.main,
     }
     programs = '{'+', '.join(list(program_to_function))+'}'
     try:
