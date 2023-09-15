@@ -9,11 +9,9 @@ import csv
 import argparse
 from typing import TextIO
 
-try:
-    from ..version import __version__
-    _VERSION = __version__
-except ImportError:
-    _VERSION = 'standalone'
+from ..version import __version__
+
+_VERSION = __version__
 
 
 def filter_terms(
@@ -65,13 +63,13 @@ def main(args: list[str] | None = None):
     """Parse arguments and call functions."""
     parser = argparse.ArgumentParser(prog='gofilter',
                                      description='Filter gProfiler output and format for revigo')
-
-    parser.add_argument('gProfiler_file', type=argparse.FileType('r', encoding='UTF-8'),
-                        help="Path to gProfiler file to filter. Reads from standard in if `-'.")
     parser.add_argument('-v', '--version', action='version',
                         version=f'rnaseq: {parser.prog} {_VERSION}')
 
     input_options = parser.add_argument_group('input options')
+    input_options.add_argument('gProfiler_file', type=argparse.FileType('r', encoding='UTF-8'),
+                               help='Path to gProfiler file to filter. '+
+                               "Reads from standard in if `-'.")
     input_options.add_argument('-c', '--term-column', dest='term_column', type=int, default=1,
                                help='Integer of column index containing gene ontology terms. '+
                                'Index starts at 0. Defaults to 1.')
