@@ -3,17 +3,28 @@ import argparse
 import os
 
 from ..sequence import sequence_io
+from ..version import __version__
+
+_VERSION = __version__
 
 
 def split_file(
         input_path: str,
+        split_number: int,
+        split_sequences: bool = False,
         directory: str = '.',
-        prefix: str | None = None
+        prefix: str | None = None,
 ) -> None:
+    """Split sequence file."""
     directory = directory.rstrip('/')
     if not os.path.isdir(directory):
         os.mkdir(directory)
     fasta_reader = sequence_io.FastaReader(input_path)
+    
+    if split_sequences:
+        pass
+    else:
+        pass
 
 
 def pos_int(argument) -> int:
@@ -30,7 +41,10 @@ def pos_int(argument) -> int:
 
 
 def main(args: list[str] | None = None):
+    """Parse arguments and call funcion."""
     parser = argparse.ArgumentParser(prog='fasta_split', description='Split fatsa/fastq files.')
+    parser.add_argument('-v', '--version', action='version',
+                        version=f'rnaseq: {parser.prog} {_VERSION}')
 
     input_options = parser.add_argument_group('input options')
     input_options.add_argument('input_file',
@@ -56,7 +70,7 @@ def main(args: list[str] | None = None):
                                 help="Directory to place split files in. Default is `.'")
 
     args = parser.parse_args(args)
-    split_file(args.input_file, args.directory, args.prefix)
+    split_file(args.input_file, args.directory)
 
 
 if __name__ == '__main__':
