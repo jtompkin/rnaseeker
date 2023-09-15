@@ -64,7 +64,7 @@ class _FileReader():
 class FastaReader(_FileReader):
     """Read fasta files"""
     def parse(self) -> Generator[SequenceRecord, None, None]:
-        """Parse fasta file and return iterator of SequenceRecord objects"""
+        """Parse fasta file and return iterator of SequenceRecord objects."""
         header = next(self._stream, None).rstrip()
         sequence = ''
         self.sequence_count += 1
@@ -78,33 +78,33 @@ class FastaReader(_FileReader):
                 sequence += line.rstrip()
         yield SequenceRecord(sequence, header)
 
+    def read_sequence(self) -> SequenceRecord:
+        """Parse fasta file and return next sequence as a SequenceRecord object."""
+
 
 class FastqReader(_FileReader):
     """Read fastq files"""
-    #def parse(self) -> Generator[SequenceRecord, None, None]:
-    #    """Parse fastq file and return iterator of SequenceRecord objects"""
-    #    with self._set_stream() as fastq_file:
-    #        header = next(fastq_file, None).rstrip()
-    #        sequence = ''
-    #        quality = ''
-    #        sequence_flag = True
-    #        self.sequence_count += 1
-    #        for line in fastq_file:
-    #            if line.startswith('@'):
-    #                yield SequenceRecord(sequence, header, quality, self.encoding)
-    #                header = line.rstrip()
-    #                sequence = ''
-    #                quality = ''
-    #                sequence_flag = True
-    #                self.sequence_count += 1
-    #            elif line.startswith('+'):
-    #                sequence_flag = False
-    #            else:
-    #                if sequence_flag:
-    #                    sequence += line.rstrip()
-    #                else:
-    #                    quality += line.rstrip()
-    #        yield SequenceRecord(sequence, header, quality, self.encoding)
+    def parse(self) -> Generator[SequenceRecord, None, None]:
+        """Parse fastq file and return iterator of SequenceRecord objects."""
+        header = next(self._stream, None).rstrip()
+        sequence = ''
+        quality = ''
+        sequence_flag = True
+        self.sequence_count += 1
+        for line in self._stream:
+            if line.startswith('>'):  # Header line
+                yield SequenceRecord(sequence, header, quality, self.encoding)
+                header = line.rstrip()
+                sequence = ''
+                quality = ''
+                self.sequence_count += 1
+            elif line.startswith('+'):  # Spacer line
+                sequence_flag = False
+            else:
+                if sequence_flag:
+                    sequence += line.rstrip()
+                else:
+                    quality += line.rstrip()
 
 
 class _FileWriter():
