@@ -61,7 +61,7 @@ def write_terms(
 
 def main(args: list[str] | None = None):
     """Parse arguments and call functions."""
-    parser = argparse.ArgumentParser(prog='gofilter',
+    parser = argparse.ArgumentParser(prog='go_filter',
                                      description='Filter gProfiler output and format for revigo')
     parser.add_argument('-v', '--version', action='version',
                         version=f'rnaseq: {parser.prog} {_VERSION}')
