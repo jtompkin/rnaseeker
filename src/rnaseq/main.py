@@ -13,6 +13,8 @@ Available sub-programs
     fasta_split: 
     fasta_filter:
 """
+from __future__ import annotations
+
 import sys
 
 from .gene_ontology import go_filter
