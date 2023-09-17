@@ -162,3 +162,6 @@ cython_debug/
 # Test files
 Test/
 test/
+
+# VScode files
+.vscode/
