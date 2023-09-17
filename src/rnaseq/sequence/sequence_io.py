@@ -1,10 +1,13 @@
 #! /usr/bin/env python3
 """Manipulate sequence files and store sequence information."""
+from __future__ import annotations
+
 from typing import Generator, Iterable
 import sys
 
+
 class SequenceRecord():
-    """Class containing sequence information"""
+    """Store and manipulate sequence information."""
     def __init__(
             self,
             sequence: str,
@@ -25,7 +28,11 @@ class SequenceRecord():
         self.name = self.description[1:].split()[0]
 
     def get_quality_scores(self) -> list[int]:
-        """Calculate quality scores and return as a list of integers."""
+        """Calculate quality scores from quality string.
+
+        Returns:
+            list[int]: All quality scores as integers
+        """
         encoding_to_int = {
             'phred33': 33,
             '33': 33,
@@ -33,6 +40,20 @@ class SequenceRecord():
             '64': 64
         }
         return [ord(i)-encoding_to_int[self.encoding] for i in self.quality]
+
+    def transcribe(self, reverse: bool = False) -> SequenceRecord:
+        """Transcribe sequence. [UNDER CONSTRUCTION]
+
+        Args:
+            reverse (bool, optional): Whether to reverse transcribe
+            RNA sequence to DNA. Defaults to False.
+
+        Returns:
+            SequenceRecord: Object containing transcribed sequence
+        """
+        if reverse:
+            return SequenceRecord('', '')
+        return SequenceRecord('', '')
 
 
 class _FileReader():
@@ -46,15 +67,11 @@ class _FileReader():
         self.sequence_count = 0
         self._stream = None
 
-    def _set_stream(self) -> None:
-        """Return file object from self.path. Return sys.stdin if `-'."""
+    def __enter__(self):
         if self.path == '-':
             self._stream = sys.stdin
         else:
             self._stream = open(self.path, 'r', encoding='UTF-8')
-
-    def __enter__(self):
-        self._set_stream()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -64,8 +81,17 @@ class _FileReader():
 class FastaReader(_FileReader):
     """Read fasta files"""
     def parse(self) -> Generator[SequenceRecord, None, None]:
-        """Parse fasta file and return iterator of SequenceRecord objects."""
-        header = next(self._stream, None).rstrip()
+        """Parse entire fasta file for sequences.
+
+        Raises:
+            AttributeError: File stream is not opened
+
+        Yields:
+            Generator[SequenceRecord, None, None]: Iterator containing sequences from file
+        """
+        if self._stream is None:
+            raise AttributeError("Need to open file stream by running inside of 'with' block.")
+        header = self._stream.readline().rstrip()
         sequence = ''
         self.sequence_count += 1
         for line in self._stream:
@@ -79,14 +105,18 @@ class FastaReader(_FileReader):
         yield SequenceRecord(sequence, header)
 
     def read_sequence(self) -> SequenceRecord:
-        """Parse fasta file and return next sequence as a SequenceRecord object."""
+        """Parse fasta file and return next sequence as a 
+        SequenceRecord object. [UNDER CONSTRUCTION]"""
+        return SequenceRecord('','')
 
 
 class FastqReader(_FileReader):
     """Read fastq files"""
     def parse(self) -> Generator[SequenceRecord, None, None]:
         """Parse fastq file and return iterator of SequenceRecord objects."""
-        header = next(self._stream, None).rstrip()
+        if self._stream is None:
+            raise AttributeError("Need to open file stream by running inside of 'with' block.")
+        header = self._stream.readline().rstrip()
         sequence = ''
         quality = ''
         sequence_flag = True
@@ -118,15 +148,11 @@ class _FileWriter():
         self.sequences_written = 0
         self._stream = None
 
-    def _set_stream(self) -> None:
-        """Set file stream"""
+    def __enter__(self):
         if self.path == '-':
             self._stream = sys.stdout
         else:
             self._stream = open(self.path, 'w', encoding='UTF-8')
-
-    def __enter__(self):
-        self._set_stream()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -137,6 +163,8 @@ class FastaWriter(_FileWriter):
     """Write fasta files."""
     def write_sequence(self, sequence: SequenceRecord) -> None:
         """Write single SeqRecord object to file."""
+        if self._stream is None:
+            raise AttributeError("Need to open file stream by running inside of 'with' block.")
         if self.line_length is None:
             sequence_split = [sequence.sequence+'\n']
         else:
@@ -147,6 +175,8 @@ class FastaWriter(_FileWriter):
 
     def write_sequences(self, sequences: Iterable[SequenceRecord]) -> None:
         """Write multiple SeqRecord objects to file."""
+        if self._stream is None:
+            raise AttributeError("Need to open file stream by running inside of 'with' block.")
         for sequence in sequences:
             if self.line_length is None:
                 sequence_split = [sequence.sequence+'\n']

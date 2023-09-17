@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import os
 
-from ..sequence import sequence_io
-from ..version import __version__
+from rnaseq.sequence import sequence_io
+from rnaseq.version import __version__
 
 _VERSION = __version__
 
@@ -19,11 +21,8 @@ def split_file(
     directory = directory.rstrip('/')
     if not os.path.isdir(directory):
         os.mkdir(directory)
-    fasta_reader = sequence_io.FastaReader(input_path)
-    
-    if split_sequences:
-        pass
-    else:
+    split_file_count = 0
+    with sequence_io.FastaReader(input_path) as fasta_reader:
         pass
 
 
@@ -40,7 +39,7 @@ def pos_int(argument) -> int:
     return argument
 
 
-def main(args: list[str] | None = None):
+def main(arguments: list[str] | None = None):
     """Parse arguments and call funcion."""
     parser = argparse.ArgumentParser(prog='fasta_split', description='Split fatsa/fastq files.')
     parser.add_argument('-v', '--version', action='version',
@@ -69,7 +68,7 @@ def main(args: list[str] | None = None):
     output_options.add_argument('-d', '--directory', dest='directory', default='.',
                                 help="Directory to place split files in. Default is `.'")
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(arguments)
     split_file(args.input_file, args.directory)
 
 
