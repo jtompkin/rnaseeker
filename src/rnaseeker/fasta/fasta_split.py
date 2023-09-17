@@ -4,8 +4,8 @@ from __future__ import annotations
 import argparse
 import os
 
-from rnaseq.sequence import sequence_io
-from rnaseq.version import __version__
+from rnaseeker.sequence import sequence_io
+from rnaseeker.version import __version__
 
 _VERSION = __version__
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from rnaseq.sequence import sequence_io
+from rnaseeker.sequence import sequence_io
 
 
 def filter_fasta(

@@ -11,7 +11,7 @@ import csv
 import argparse
 from typing import TextIO
 
-from rnaseq.version import __version__
+from rnaseeker.version import __version__
 
 _VERSION = __version__
 
