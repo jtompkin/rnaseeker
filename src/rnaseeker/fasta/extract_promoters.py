@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+from sys import stderr
 import argparse
 import subprocess
 import shutil
@@ -31,10 +32,13 @@ def extract_gene_info(gff_path: str, out_path: str):
 
 
 def extract_promoters(gff_path: str, fasta_path: str, length: int, out_directory: str):
+    stderr.write('Extracting gene info...\n')
     extract_gene_info(gff_path, f'{out_directory}/genes.gff')
+    stderr.write('Converting gff to bed...\n')
     gff_to_bed(f'{out_directory}/genes.gff', f'{out_directory}/genes.bed')
 
     # Make index for fasta file
+    stderr.write('Making index of fasta file...\n')
     fasta_name = fasta_path.split('/')[-1]
     subprocess.run(
         f'samtools faidx --fai-idx {out_directory}/{fasta_name}.fai {fasta_path}'.split(),
@@ -42,6 +46,7 @@ def extract_promoters(gff_path: str, fasta_path: str, length: int, out_directory
     )
 
     # Make table with chromosome sizes
+    stderr.write('Creating table of chromosome sizes...\n')
     with(
         open(f'{out_directory}/{fasta_name}.fai', 'r', encoding='UTF-8') as index_file,
         open(f'{out_directory}/sizes.chr', 'w', encoding='UTF-8') as out_file
@@ -50,6 +55,7 @@ def extract_promoters(gff_path: str, fasta_path: str, length: int, out_directory
             out_file.write('\t'.join(line.split('\t')[:2])+'\n')
 
     # Make bed file containing location of promoters
+    stderr.write('Creating bed file containing location of promoters...\n')
     with open(f'{out_directory}/promoters.bed', 'w', encoding='UTF-8') as promoter_bed_file:
         promoter_bed_file.write(
             subprocess.run(
@@ -59,6 +65,7 @@ def extract_promoters(gff_path: str, fasta_path: str, length: int, out_directory
         )
 
     # Extract promoter regions from fasta file
+    stderr.write('Extracting promoter regions from fasta file...\n')
     subprocess.run(
         (f'bedtools getfasta -s -fi {fasta_path} -bed {out_directory}/promoters.bed '+
         f'-fo {out_directory}/promoters.fa -name').split(), check=True
@@ -66,13 +73,13 @@ def extract_promoters(gff_path: str, fasta_path: str, length: int, out_directory
     if os.path.isfile(f'{fasta_name}.fai'):
         os.remove(f'{fasta_name}.fai')
 
-    print(f'Results are in {out_directory}/promoters.fa')
+    stderr.write(f'Results are in {out_directory}/promoters.fa\n')
     with open(f'{out_directory}/promoters.fa', 'r', encoding='UTF-8') as fasta_file:
         sequence_count = 0
         for line in fasta_file:
             if line.startswith('>'):
                 sequence_count += 1
-        print(f'Found {sequence_count} promoters')
+        stderr.write(f'Found {sequence_count} promoters\n')
 
 
 def main(arguments: list[str] | None = None):
