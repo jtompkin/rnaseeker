@@ -4,12 +4,14 @@
 # author: Josh Tompkin
 # contact: jtompkindev@gmail.com
 # github: https://github.com/jtompkin/RNAseq
+from __future__ import annotations
+
 import sys
 import csv
 import argparse
 from typing import TextIO
 
-from ..version import __version__
+from rnaseeker.version import __version__
 
 _VERSION = __version__
 
@@ -20,21 +22,21 @@ def filter_terms(
         term_column: int = 1,
         to_filter: str = '',
         filter_path: str | None = None,
-) -> list[str]:
+) -> list[list[str]]:
     """Filter gene ontology terms from input file"""
     if filter_path:
         with open(filter_path, 'r', encoding='UTF-8') as filter_file:
-            to_filter = [i.rstrip() for i in filter_file.readlines()]
+            terms_to_filter = [i.rstrip() for i in filter_file.readlines()]
     else:
-        to_filter = [i.lstrip() for i in to_filter.split(';')]
+        terms_to_filter = [i.lstrip() for i in to_filter.split(';')]
     with in_file:
         in_reader = csv.reader(in_file, delimiter=delimiter)
-        return [row for row in in_reader if row[term_column] not in to_filter]
+        return [row for row in in_reader if row[term_column] not in terms_to_filter]
 
 
 def write_terms(
         out_file: TextIO,
-        terms: list[str],
+        terms: list[list[str]],
         delimiter: str = '\t',
         format_out: bool = True,
         header: bool = False,
@@ -42,26 +44,22 @@ def write_terms(
         pval_column: int = 4
 ) -> None:
     """Write gene ontology terms. Optionally format output for Revigo"""
-    if format_out:
-        quoting = csv.QUOTE_MINIMAL
-    else:
-        quoting =csv.QUOTE_ALL
     with out_file:
-        out_writer = csv.writer(out_file, delimiter=delimiter, quoting=quoting)
         if format_out:
+            out_writer = csv.writer(out_file, delimiter=delimiter, quoting=csv.QUOTE_MINIMAL)
             out_writer.writerows(
                 [[row[id_column], row[pval_column]] for row in terms[1:]]
             )
-            return None
-        if header:
-            out_writer.writerow(terms[0])
-        out_writer.writerows(terms[1:])
-        return None
+        else:
+            out_writer = csv.writer(out_file, delimiter=delimiter, quoting=csv.QUOTE_ALL)
+            if header:
+                out_writer.writerow(terms[0])
+            out_writer.writerows(terms[1:])
 
 
-def main(args: list[str] | None = None):
+def main(arguments: list[str] | None = None):
     """Parse arguments and call functions."""
-    parser = argparse.ArgumentParser(prog='gofilter',
+    parser = argparse.ArgumentParser(prog='go_filter',
                                      description='Filter gProfiler output and format for revigo')
     parser.add_argument('-v', '--version', action='version',
                         version=f'rnaseq: {parser.prog} {_VERSION}')
@@ -105,7 +103,7 @@ def main(args: list[str] | None = None):
                                 help='Path to file containing gene ontology terms to filter. '+
                                 "One gene ontology term per line. Not compatible with -f.")
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(arguments)
 
     filtered_terms = filter_terms(args.gProfiler_file,
                                   delimiter=args.in_delimiter,

@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 
-from rnaseq.sequence import sequence_io
+from rnaseeker.sequence import sequence_io
 
 
 def filter_fasta(
@@ -22,7 +24,7 @@ def filter_fasta(
         fasta_out.write_sequences(good_sequences)
 
 
-def main(args: list[str] | None = None):
+def main(arguments: list[str] | None = None):
     """Parse arguments and call function."""
     parser = argparse.ArgumentParser('fasta_filter')
 
@@ -37,7 +39,7 @@ def main(args: list[str] | None = None):
                         help='Maximum line length for sequence lines in output fasta file. Give 0 '+
                         'to place entire sequence on one line. Default is 60')
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(arguments)
     if args.line_length == 0:
         line_length = None
     else:
