@@ -6,14 +6,15 @@ from typing import Generator, Iterable
 import sys
 
 
-class SequenceRecord():
+class SequenceRecord:
     """Store and manipulate sequence information."""
+
     def __init__(
-            self,
-            sequence: str,
-            description: str,
-            quality: str | None = None,
-            encoding: str | None = None
+        self,
+        sequence: str,
+        description: str,
+        quality: str | None = None,
+        encoding: str | None = None,
     ) -> None:
         self.sequence = sequence
         self.description = description
@@ -33,13 +34,8 @@ class SequenceRecord():
         Returns:
             list[int]: All quality scores as integers
         """
-        encoding_to_int = {
-            'phred33': 33,
-            '33': 33,
-            'phred64': 64,
-            '64': 64
-        }
-        return [ord(i)-encoding_to_int[self.encoding] for i in self.quality]
+        encoding_to_int = {'phred33': 33, '33': 33, 'phred64': 64, '64': 64}
+        return [ord(i) - encoding_to_int[self.encoding] for i in self.quality]
 
     def transcribe(self, reverse: bool = False) -> SequenceRecord:
         """Transcribe sequence. [UNDER CONSTRUCTION]
@@ -56,16 +52,11 @@ class SequenceRecord():
         return SequenceRecord('', '')
 
 
-class _FileReader():
-    def __init__(
-            self,
-            path: str,
-            encoding: str | None = None
-    ) -> None:
+class _FileReader:
+    def __init__(self, path: str, encoding: str | None = None) -> None:
         self.path = path
         self.encoding = encoding
         self.sequence_count = 0
-        self._stream = None
 
     def __enter__(self):
         if self.path == '-':
@@ -74,7 +65,7 @@ class _FileReader():
             self._stream = open(self.path, 'r', encoding='UTF-8')
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._stream.close()
 
 
@@ -87,11 +78,15 @@ class FastaReader(_FileReader):
             AttributeError: File stream is not opened
 
         Yields:
-            Generator[SequenceRecord, None, None]: Iterator containing sequences from file
+            Generator[SequenceRecord, None, None]: Iterator containing sequences 
+        records from file
         """
-        if self._stream is None:
-            raise AttributeError("Need to open file stream by running inside of 'with' block.")
-        header = self._stream.readline().rstrip()
+        try:
+            header = self._stream.readline().rstrip()
+        except AttributeError as exception:
+            raise AttributeError(
+                "Need to open file stream by running inside of 'with' block."
+            ) from exception
         sequence = ''
         self.sequence_count += 1
         for line in self._stream:
@@ -104,18 +99,22 @@ class FastaReader(_FileReader):
                 sequence += line.rstrip()
         yield SequenceRecord(sequence, header)
 
-    def read_sequence(self) -> SequenceRecord:
-        """Parse fasta file and return next sequence as a 
+    def _read_sequence(self) -> SequenceRecord:
+        """Parse fasta file and return next sequence as a
         SequenceRecord object. [UNDER CONSTRUCTION]"""
-        return SequenceRecord('','')
+        return SequenceRecord('', '')
 
 
 class FastqReader(_FileReader):
     """Read fastq files"""
     def parse(self) -> Generator[SequenceRecord, None, None]:
         """Parse fastq file and return iterator of SequenceRecord objects."""
-        if self._stream is None:
-            raise AttributeError("Need to open file stream by running inside of 'with' block.")
+        try:
+            header = self._stream.readline().rstrip()
+        except AttributeError as exception:
+            raise AttributeError(
+                "Need to open file stream by running inside of 'with' block."
+            ) from exception
         header = self._stream.readline().rstrip()
         sequence = ''
         quality = ''
@@ -137,12 +136,8 @@ class FastqReader(_FileReader):
                     quality += line.rstrip()
 
 
-class _FileWriter():
-    def __init__(
-            self,
-            path: str,
-            line_length: int | None = 60
-    ) -> None:
+class _FileWriter:
+    def __init__(self, path: str, line_length: int | None = 60) -> None:
         self.path = path
         self.line_length = line_length
         self.sequences_written = 0
@@ -161,27 +156,36 @@ class _FileWriter():
 
 class FastaWriter(_FileWriter):
     """Write fasta files."""
+
     def write_sequence(self, sequence: SequenceRecord) -> None:
         """Write single SeqRecord object to file."""
         if self._stream is None:
-            raise AttributeError("Need to open file stream by running inside of 'with' block.")
+            raise AttributeError(
+                "Need to open file stream by running inside of 'with' block."
+            )
         if self.line_length is None:
-            sequence_split = [sequence.sequence+'\n']
+            sequence_split = [sequence.sequence + '\n']
         else:
-            sequence_split = [sequence.sequence[i:i+self.line_length]+'\n' for i in
-                              range(0, len(sequence.sequence), self.line_length)]
-        self._stream.writelines([sequence.description+'\n'] + sequence_split)
+            sequence_split = [
+                sequence.sequence[i : i + self.line_length] + '\n'
+                for i in range(0, len(sequence.sequence), self.line_length)
+            ]
+        self._stream.writelines([sequence.description + '\n'] + sequence_split)
         self.sequences_written += 1
 
     def write_sequences(self, sequences: Iterable[SequenceRecord]) -> None:
         """Write multiple SeqRecord objects to file."""
         if self._stream is None:
-            raise AttributeError("Need to open file stream by running inside of 'with' block.")
+            raise AttributeError(
+                "Need to open file stream by running inside of 'with' block."
+            )
         for sequence in sequences:
             if self.line_length is None:
-                sequence_split = [sequence.sequence+'\n']
+                sequence_split = [sequence.sequence + '\n']
             else:
-                sequence_split = [sequence.sequence[i:i+self.line_length]+'\n' for i in
-                                  range(0, len(sequence.sequence), self.line_length)]
-            self._stream.writelines([sequence.description+'\n'] + sequence_split)
+                sequence_split = [
+                    sequence.sequence[i : i + self.line_length] + '\n'
+                    for i in range(0, len(sequence.sequence), self.line_length)
+                ]
+            self._stream.writelines([sequence.description + '\n'] + sequence_split)
             self.sequences_written += 1

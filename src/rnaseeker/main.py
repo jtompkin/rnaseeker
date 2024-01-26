@@ -22,7 +22,7 @@ from .version import __version__
 _VERSION = __version__
 
 
-def main():
+def main(arguments: list[str]) -> None:
     """Deploy given sub-program. Print version or help information if requested."""
     program_to_function = {
         'go_filter': go_filter.main,
@@ -55,4 +55,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
