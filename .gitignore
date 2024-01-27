@@ -165,3 +165,6 @@ test/
 
 # VScode files
 .vscode/
+
+# Data files
+Data/

@@ -58,6 +58,19 @@ class _FileReader:
         self.encoding = encoding
         self.sequence_count = 0
 
+    def count_sequences(self) -> None:
+        self.sequence_count = 0
+        try:
+            for line in self._stream:
+                if line.startswith('>'):
+                    self.sequence_count += 1
+        except AttributeError as exception:
+            raise AttributeError(
+                "Need to open file stream by running inside of 'with' block."
+            ) from exception
+        self._stream.seek(0)
+        self._reset_count = True
+
     def __enter__(self):
         if self.path == '-':
             self._stream = sys.stdin
@@ -71,6 +84,7 @@ class _FileReader:
 
 class FastaReader(_FileReader):
     """Read fasta files"""
+
     def parse(self) -> Generator[SequenceRecord, None, None]:
         """Parse entire fasta file for sequences.
 
@@ -78,7 +92,7 @@ class FastaReader(_FileReader):
             AttributeError: File stream is not opened
 
         Yields:
-            Generator[SequenceRecord, None, None]: Iterator containing sequences 
+            Generator[SequenceRecord, None, None]: Iterator containing sequences
         records from file
         """
         try:
@@ -88,6 +102,9 @@ class FastaReader(_FileReader):
                 "Need to open file stream by running inside of 'with' block."
             ) from exception
         sequence = ''
+        if self._reset_count:
+            self.sequence_count = 0
+            self._reset_count = False
         self.sequence_count += 1
         for line in self._stream:
             if line.startswith('>'):
@@ -107,6 +124,7 @@ class FastaReader(_FileReader):
 
 class FastqReader(_FileReader):
     """Read fastq files"""
+
     def parse(self) -> Generator[SequenceRecord, None, None]:
         """Parse fastq file and return iterator of SequenceRecord objects."""
         try:
@@ -189,3 +207,13 @@ class FastaWriter(_FileWriter):
                 ]
             self._stream.writelines([sequence.description + '\n'] + sequence_split)
             self.sequences_written += 1
+
+
+class FastqWriter(_FileWriter):
+    """Write fastq files"""
+
+    def write_sequence(self, sequence: SequenceRecord) -> None:
+        pass
+
+    def write_sequences(self, sequences: Iterable[SequenceRecord]):
+        pass

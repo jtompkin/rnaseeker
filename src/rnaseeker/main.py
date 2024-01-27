@@ -22,15 +22,15 @@ from .version import __version__
 _VERSION = __version__
 
 
-def main(arguments: list[str]) -> None:
+def main(arguments: list[str] | None = None) -> None:
     """Deploy given sub-program. Print version or help information if requested."""
     program_to_function = {
-        'go_filter': go_filter.main,
-        'fasta_split': fasta_split.main,
-        'fasta_filter': fasta_filter.main,
-        'extract_promoters': extract_promoters.main,
+        'go-filter': go_filter.main,
+        'fasta-split': fasta_split.main,
+        'fasta-filter': fasta_filter.main,
+        'extract-promoters': extract_promoters.main,
     }
-    programs = '{'+', '.join(list(program_to_function))+'}'
+    programs = '{' + ', '.join(list(program_to_function)) + '}'
     try:
         if '-v' == sys.argv[1] or '--version' == sys.argv[1]:
             print(f'rnaseq {_VERSION}')
@@ -39,8 +39,10 @@ def main(arguments: list[str]) -> None:
             print(__doc__.strip())
             sys.exit(0)
     except IndexError:  # Only program name was given
-        sys.stderr.write('Usage: rnaseq [-h] [-v] <sub-program> <sub-program args>\n'+
-                         f'Available sub-programs: {programs}\n')
+        sys.stderr.write(
+            'Usage: rnaseq [-h] [-v] <sub-program> <sub-program args>\n'
+            + f'Available sub-programs: {programs}\n'
+        )
         sys.exit(1)
     # Exclude program name
     args = sys.argv[1:]
