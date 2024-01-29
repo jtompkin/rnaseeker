@@ -1,17 +1,25 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 """
-----------
-+ rnaseq +
-----------
+-------------
++ rnaseeker +
+-------------
 RNA-seq scripts and libraries
-    rnaseq [-h] [-v] <sub-program> <sub-program args>
+
+author: Josh Tompkin
+contact: jtompkin-dev@proton.me
+source: https://github.com/jtompkin/rnaseeker
+
+usage:
+    rnaseeker [-h] [-v] <sub-program> <sub-program args>
 options:
     -h, --help      show this help message and exit
     -v, --version   show program's version number and exit
-Available sub-programs
-    go_filter: Filter gProfiler output and format for Revigo.
-    fasta_split: 
-    fasta_filter:
+available sub-programs:
+    go-filter:      Filter gProfiler output and format for Revigo
+    fasta-split:    Split fasta/fastq files
+    fasta-filter:   Filter fasta sequences by length and 'N' content
+example (show help information for fasta-split sub-program):
+    rnaseeker fasta-split --help
 """
 import sys
 
@@ -19,30 +27,30 @@ from .gene_ontology import go_filter
 from .fasta import fasta_split, fasta_filter, extract_promoters
 from .version import __version__
 
-_VERSION = __version__
 
-
-def main():
+def main(arguments: list[str] | None = None) -> None:
     """Deploy given sub-program. Print version or help information if requested."""
     program_to_function = {
-        'go_filter': go_filter.main,
-        'fasta_split': fasta_split.main,
-        'fasta_filter': fasta_filter.main,
-        'extract_promoters': extract_promoters.main,
+        'go-filter': go_filter.main,
+        'fasta-split': fasta_split.main,
+        'fasta-filter': fasta_filter.main,
+        'extract-promoters': extract_promoters.main,
     }
-    programs = '{'+', '.join(list(program_to_function))+'}'
+    programs = '{' + ', '.join(program_to_function) + '}'
     try:
         if '-v' == sys.argv[1] or '--version' == sys.argv[1]:
-            print(f'rnaseq {_VERSION}')
+            print(f'rnaseq {__version__}')
             sys.exit(0)
         elif '-h' == sys.argv[1] or '--help' == sys.argv[1]:
             print(__doc__.strip())
             sys.exit(0)
-    except IndexError:  # Only program name was given
-        sys.stderr.write('Usage: rnaseq [-h] [-v] <sub-program> <sub-program args>\n'+
-                         f'Available sub-programs: {programs}\n')
+    except IndexError:  # Only 'rnaseeker' program name was given
+        sys.stderr.write(
+            'usage: rnaseeker [-h] [-v] <sub-program> <sub-program args>\n'
+            + f'Available sub-programs: {programs}\n'
+        )
         sys.exit(1)
-    # Exclude program name
+    # Exclude 'rnaseeker' program name
     args = sys.argv[1:]
 
     try:
@@ -55,4 +63,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
