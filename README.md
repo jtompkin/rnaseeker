@@ -8,7 +8,13 @@ Josh Tompkin
 
 <https://github.com/jtompkin/rnaseeker>
 
-## Command line programs
+### Install with pip
+
+```bash
+pip3 install rnaseeker
+```
+
+### Command line programs
 
 - go_filter: Filter gProfiler output and format for Revigo
 
@@ -28,7 +34,7 @@ rnaseeker fasta-filter [-h] [-o OUT_PATH] [-l LINE_LENGTH] fasta_path minimum_ba
 rnaseeker fasta-split [-h] [-v] [-i INPUT] [-f {fasta,fastq}] [-s] [-p [PREFIX]] [--header-prefix [REGEX]] [-d DIRECTORY] [-e EXTENSION] number
 ```
 
-## Python libraries
+### Python libraries
 
 - sequence
   - sequence_io: Manipulate sequence files and store sequence information
