@@ -39,7 +39,7 @@ def main(arguments: list[str] | None = None) -> None:
     programs = '{' + ', '.join(program_to_function) + '}'
     try:
         if '-v' == sys.argv[1] or '--version' == sys.argv[1]:
-            print(f'rnaseq {__version__}')
+            print(f'rnaseeker {__version__}')
             sys.exit(0)
         elif '-h' == sys.argv[1] or '--help' == sys.argv[1]:
             print(__doc__.strip())
