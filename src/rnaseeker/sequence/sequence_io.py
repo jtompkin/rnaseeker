@@ -1,7 +1,7 @@
 """""Manipulate sequence files and store sequence information.""" ''
 from __future__ import annotations
 
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Literal
 import sys
 
 
@@ -12,19 +12,13 @@ class SequenceRecord:
         self,
         sequence: str,
         description: str,
-        quality: str | None = None,
-        encoding: str | None = None,
+        quality: str = '',
+        encoding: Literal['phred33', 'phred64'] = 'phred33',
     ) -> None:
         self.sequence = sequence
         self.description = description
-        if quality is None:
-            self.quality = ''
-        else:
-            self.quality = quality
-        if encoding is None:
-            self.encoding = 'phred33'
-        else:
-            self.encoding = encoding
+        self.quality = quality
+        self.encoding = encoding
         self.name = self.description[1:].split()[0]
 
     def get_quality_scores(self) -> list[int]:
@@ -33,8 +27,16 @@ class SequenceRecord:
         Returns:
             list[int]: All quality scores as integers
         """
-        encoding_to_int = {'phred33': 33, '33': 33, 'phred64': 64, '64': 64}
-        return [ord(i) - encoding_to_int[self.encoding] for i in self.quality]
+        return [
+            ord(i) - {'phred33': 33, 'phred64': 64}[self.encoding] for i in self.quality
+        ]
+
+    def convert_quality_string(self) -> None:
+        """Convert between phred33 and phred64 quality encodng"""
+        if self.encoding == 'phred33':
+            self.quality = ''.join([chr(ord(i) + 31) for i in self.quality])
+        else:
+            self.quality = ''.join([chr(ord(i) - 31) for i in self.quality])
 
     def transcribe(self, reverse: bool = False) -> SequenceRecord:
         """Transcribe sequence. [UNDER CONSTRUCTION]
@@ -52,7 +54,9 @@ class SequenceRecord:
 
 
 class _SequenceFileReader:
-    def __init__(self, path: str, encoding: str | None = None) -> None:
+    def __init__(
+        self, path: str, encoding: Literal['phred33', 'phred64'] = 'phred33'
+    ) -> None:
         self.path = path
         self.encoding = encoding
         self.sequence_count = 0
@@ -74,7 +78,7 @@ class _SequenceFileReader:
         if self.path == '-':
             self.stream = sys.stdin
         else:
-            self.stream = open(self.path, 'r', encoding='UTF-8')
+            self.stream = open(self.path, 'r')
         self.check_format()
         return self
 
@@ -143,7 +147,9 @@ class FastaReader:
 class FastqReader:
     """Read fastq files"""
 
-    def __init__(self, path: str, encoding: str) -> None:
+    def __init__(
+        self, path: str, encoding: Literal['phred33', 'phred64'] = 'phred33'
+    ) -> None:
         self.reader = _SequenceFileReader(path, encoding)
         self._last_header = ''
 
@@ -158,7 +164,7 @@ class FastqReader:
         sequence_flag = True
         self.reader.sequence_count = 1
         for line in self.reader.stream:
-            if line.startswith('>'):  # Header line
+            if line.startswith('>'):
                 yield SequenceRecord(sequence, header, quality, self.reader.encoding)
                 header = line.rstrip()
                 sequence = ''
@@ -182,7 +188,12 @@ class FastqReader:
 
 
 class _SequenceFileWriter:
-    def __init__(self, path: str, line_length: int) -> None:
+    def __init__(
+        self,
+        path: str,
+        line_length: int,
+        encoding: Literal['phred33', 'phred64'] = 'phred33',
+    ) -> None:
         self.path = path
         self.line_length = line_length
         self.sequences_written = 0
@@ -191,7 +202,7 @@ class _SequenceFileWriter:
         if self.path == '-':
             self.stream = sys.stdout
         else:
-            self.stream = open(self.path, 'w', encoding='UTF-8')
+            self.stream = open(self.path, 'a')
         return self
 
     def __exit__(self, exc_type: type, exc_value: int, traceback: str) -> None:
@@ -201,7 +212,7 @@ class _SequenceFileWriter:
 class FastaWriter:
     """Write fasta files."""
 
-    def __init__(self, path: str, line_length: int = 80) -> None:
+    def __init__(self, path: str, line_length: int = 80, **kwargs: str) -> None:
         self.writer = _SequenceFileWriter(path, line_length)
 
     def write_sequence(self, sequence: SequenceRecord) -> None:
@@ -209,7 +220,7 @@ class FastaWriter:
         assert hasattr(
             self.writer, 'stream'
         ), "Need to open file stream by running inside of 'with' block"
-        if self.writer.line_length == -1:
+        if self.writer.line_length <= 0:
             sequence_split = [sequence.sequence + '\n']
         else:
             sequence_split = [
@@ -235,14 +246,23 @@ class FastaWriter:
 class FastqWriter:
     """Write fastq files"""
 
-    def __init__(self, path: str, line_length: int = 80) -> None:
+    def __init__(
+        self,
+        path: str,
+        line_length: int = 80,
+        encoding: Literal['phred33', 'phred64'] = 'phred33',
+    ) -> None:
         self.writer = _SequenceFileWriter(path, line_length)
 
     def write_sequence(self, sequence: SequenceRecord) -> None:
-        pass
+        assert hasattr(
+            self.writer, 'stream'
+        ), "Need to open file stream by running inside of 'with' block"
 
     def write_sequences(self, sequences: Iterable[SequenceRecord]) -> None:
-        pass
+        """Write multiple SequenceRecord objects to file"""
+        for sequence in sequences:
+            self.write_sequence(sequence)
 
     def __enter__(self) -> FastqWriter:
         self.writer = self.writer.__enter__()
